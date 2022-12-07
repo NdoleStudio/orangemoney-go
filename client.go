@@ -1,4 +1,4 @@
-package client
+package orangemoney
 
 import (
 	"bytes"
@@ -6,9 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
+	"sync"
+	"time"
 )
 
 type service struct {
@@ -20,10 +23,17 @@ type service struct {
 type Client struct {
 	httpClient *http.Client
 	common     service
-	baseURL    string
-	delay      int
 
-	Status *statusService
+	baseURL   string
+	username  string
+	password  string
+	authToken string
+
+	accessToken         string
+	tokenExpirationTime int64
+	mutex               sync.Mutex
+
+	MerchantPayment *merchantPaymentService
 }
 
 // New creates and returns a new campay.Client from a slice of campay.ClientOption.
@@ -36,19 +46,71 @@ func New(options ...Option) *Client {
 
 	client := &Client{
 		httpClient: config.httpClient,
-		delay:      config.delay,
 		baseURL:    config.baseURL,
+		username:   config.username,
+		password:   config.password,
+		authToken:  config.authToken,
+		mutex:      sync.Mutex{},
 	}
 
 	client.common.client = client
-	client.Status = (*statusService)(&client.common)
+	client.MerchantPayment = (*merchantPaymentService)(&client.common)
 	return client
+}
+
+// AccessToken fetches the access token used to authenticate api requests.
+func (client *Client) AccessToken(ctx context.Context) (*AccessTokenResponse, *Response, error) {
+	data := url.Values{}
+	data.Set("grant_type", "client_credentials")
+
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, client.baseURL+"/token", strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	request.SetBasicAuth(client.username, client.password)
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+
+	resp, err := client.do(request)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	var token AccessTokenResponse
+	if err = json.Unmarshal(*resp.Body, &token); err != nil {
+		return nil, resp, err
+	}
+
+	return &token, resp, nil
+}
+
+// refreshToken refreshes the authentication AccessTokenResponse
+func (client *Client) refreshToken(ctx context.Context) error {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
+	if client.tokenExpirationTime > time.Now().UTC().Unix() {
+		return nil
+	}
+
+	client.accessToken = ""
+
+	token, _, err := client.AccessToken(ctx)
+	if err != nil {
+		return err
+	}
+
+	client.accessToken = token.AccessToken
+	client.tokenExpirationTime = time.Now().UTC().Unix() + token.ExpiresIn - 100 // Give extra 100 second buffer
+
+	return nil
 }
 
 // newRequest creates an API request. A relative URL can be provided in uri,
 // in which case it is resolved relative to the BaseURL of the Client.
 // URI's should always be specified without a preceding slash.
-func (client *Client) newRequest(ctx context.Context, method, uri string, body interface{}) (*http.Request, error) {
+func (client *Client) newRequest(ctx context.Context, method, uri string, body any) (*http.Request, error) {
 	var buf io.ReadWriter
 	if body != nil {
 		buf = &bytes.Buffer{}
@@ -65,24 +127,12 @@ func (client *Client) newRequest(ctx context.Context, method, uri string, body i
 		return nil, err
 	}
 
+	req.Header.Set("X-AUTH-TOKEN", client.authToken)
+	req.Header.Set("Authorization", "Bearer "+client.accessToken)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	if client.delay > 0 {
-		client.addURLParams(req, map[string]string{"sleep": strconv.Itoa(client.delay)})
-	}
-
 	return req, nil
-}
-
-// addURLParams adds urls parameters to an *http.Request
-func (client *Client) addURLParams(request *http.Request, params map[string]string) *http.Request {
-	q := request.URL.Query()
-	for key, value := range params {
-		q.Add(key, value)
-	}
-	request.URL.RawQuery = q.Encode()
-	return request
 }
 
 // do carries out an HTTP request and returns a Response
@@ -103,7 +153,7 @@ func (client *Client) do(req *http.Request) (*Response, error) {
 		return resp, err
 	}
 
-	_, err = io.Copy(ioutil.Discard, httpResponse.Body)
+	_, err = io.Copy(io.Discard, httpResponse.Body)
 	if err != nil {
 		return resp, err
 	}
@@ -120,7 +170,7 @@ func (client *Client) newResponse(httpResponse *http.Response) (*Response, error
 	resp := new(Response)
 	resp.HTTPResponse = httpResponse
 
-	buf, err := ioutil.ReadAll(resp.HTTPResponse.Body)
+	buf, err := io.ReadAll(resp.HTTPResponse.Body)
 	if err != nil {
 		return nil, err
 	}

@@ -1,17 +1,21 @@
-package client
+package orangemoney
 
 import "net/http"
 
 type clientConfig struct {
 	httpClient *http.Client
-	delay      int
+	username   string
+	password   string
 	baseURL    string
+	authToken  string
 }
 
 func defaultClientConfig() *clientConfig {
 	return &clientConfig{
 		httpClient: http.DefaultClient,
-		delay:      0,
-		baseURL:    "https://httpstat.us",
+		username:   "",
+		password:   "",
+		authToken:  "",
+		baseURL:    "https://api-s1.orange.cm",
 	}
 }

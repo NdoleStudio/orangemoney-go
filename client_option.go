@@ -1,4 +1,4 @@
-package client
+package orangemoney
 
 import (
 	"net/http"
@@ -35,12 +35,23 @@ func WithBaseURL(baseURL string) Option {
 	})
 }
 
-// WithDelay sets the delay in milliseconds before a response is gotten.
-// The delay must be > 0 for it to be used.
-func WithDelay(delay int) Option {
+// WithUsername sets the Orange API Username used to fetch the access token
+func WithUsername(username string) Option {
 	return clientOptionFunc(func(config *clientConfig) {
-		if delay > 0 {
-			config.delay = delay
-		}
+		config.username = username
+	})
+}
+
+// WithPassword sets the Orange API password used to fetch the access token
+func WithPassword(password string) Option {
+	return clientOptionFunc(func(config *clientConfig) {
+		config.password = password
+	})
+}
+
+// WithAuthToken sets the X-AUTH-TOKEN used as a header of API requests
+func WithAuthToken(authToken string) Option {
+	return clientOptionFunc(func(config *clientConfig) {
+		config.authToken = authToken
 	})
 }

@@ -1,4 +1,4 @@
-package client
+package orangemoney
 
 import (
 	"net/http"
@@ -52,7 +52,7 @@ func TestWithBaseURL(t *testing.T) {
 		WithBaseURL(baseURL).apply(config)
 
 		// Assert
-		assert.Equal(t, config.baseURL, config.baseURL)
+		assert.Equal(t, baseURL, config.baseURL)
 	})
 
 	t.Run("tailing / is trimmed from baseURL", func(t *testing.T) {
@@ -71,34 +71,53 @@ func TestWithBaseURL(t *testing.T) {
 	})
 }
 
-func TestWithDelay(t *testing.T) {
-	t.Run("delay is set successfully", func(t *testing.T) {
+func TestWithUsername(t *testing.T) {
+	t.Run("username is set successfully", func(t *testing.T) {
 		// Setup
 		t.Parallel()
 
 		// Arrange
+		username := "username-1"
 		config := defaultClientConfig()
-		delay := 1
 
 		// Act
-		WithDelay(delay).apply(config)
+		WithUsername(username).apply(config)
 
 		// Assert
-		assert.Equal(t, delay, config.delay)
+		assert.Equal(t, username, config.username)
 	})
+}
 
-	t.Run("delay is not set when value < 0", func(t *testing.T) {
+func TestWithPassword(t *testing.T) {
+	t.Run("password is set successfully", func(t *testing.T) {
 		// Setup
 		t.Parallel()
 
 		// Arrange
+		password := "password-1"
 		config := defaultClientConfig()
-		delay := -1
 
 		// Act
-		WithDelay(delay).apply(config)
+		WithPassword(password).apply(config)
 
 		// Assert
-		assert.Equal(t, 0, config.delay)
+		assert.Equal(t, password, config.password)
+	})
+}
+
+func TestWithAuthToken(t *testing.T) {
+	t.Run("authToken is set successfully", func(t *testing.T) {
+		// Setup
+		t.Parallel()
+
+		// Arrange
+		authToken := "token-1"
+		config := defaultClientConfig()
+
+		// Act
+		WithAuthToken(authToken).apply(config)
+
+		// Assert
+		assert.Equal(t, authToken, config.authToken)
 	})
 }
