@@ -40,12 +40,10 @@ func TestMerchantPaymentService_Init(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, response.HTTPResponse.StatusCode)
 
-	assert.Equal(t, &PayTokenResponse{
+	assert.Equal(t, &OrangeResponse[PayToken]{
 		Message: "Payment request successfully initiated",
-		Data: struct {
-			PayToken string `json:"payToken"`
-		}{
-			PayToken: "MP22120771FEB7B21FD2381C3786",
+		Data: PayToken{
+			Token: "MP22120771FEB7B21FD2381C3786",
 		},
 	}, payToken)
 
