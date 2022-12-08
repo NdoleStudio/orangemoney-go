@@ -20,7 +20,7 @@ func MakeTestServer(responseCode int, body []byte) *httptest.Server {
 }
 
 // MakeRequestCapturingTestServer creates an api server that captures the request object
-func MakeRequestCapturingTestServer(responseCode int, responses [][]byte, requests *[]http.Request) *httptest.Server {
+func MakeRequestCapturingTestServer(responseCodes []int, responses [][]byte, requests *[]http.Request) *httptest.Server {
 	index := 0
 	return httptest.NewServer(http.HandlerFunc(func(responseWriter http.ResponseWriter, req *http.Request) {
 		clonedRequest := req.Clone(context.Background())
@@ -35,7 +35,7 @@ func MakeRequestCapturingTestServer(responseCode int, responses [][]byte, reques
 
 		*requests = append(*requests, *clonedRequest)
 
-		responseWriter.WriteHeader(responseCode)
+		responseWriter.WriteHeader(responseCodes[index])
 		_, err = responseWriter.Write(responses[index])
 		index++
 		if err != nil {

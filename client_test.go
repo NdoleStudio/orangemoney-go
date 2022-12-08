@@ -22,7 +22,7 @@ func TestClient_Token(t *testing.T) {
 
 	// Arrange
 	requests := make([]http.Request, 0)
-	server := helpers.MakeRequestCapturingTestServer(http.StatusOK, [][]byte{stubs.TokenResponse()}, &requests)
+	server := helpers.MakeRequestCapturingTestServer([]int{http.StatusOK}, [][]byte{stubs.TokenResponse()}, &requests)
 
 	client := New(
 		WithBaseURL(server.URL),

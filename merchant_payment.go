@@ -30,3 +30,20 @@ type MerchantPaymentTransaction struct {
 	Description               string  `json:"description"`
 	ChannelUserMSISDN         string  `json:"channelUserMsisdn"`
 }
+
+// IsExpired checks if a transaction is expired
+func (transaction *MerchantPaymentTransaction) IsExpired() bool {
+	return transaction.Status == "EXPIRED"
+}
+
+// IsPending checks if a transaction is pending
+func (transaction *MerchantPaymentTransaction) IsPending() bool {
+	return transaction.Status == "PENDING"
+}
+
+// IsConfirmed checks if a transaction is confirmed by the user
+func (transaction *MerchantPaymentTransaction) IsConfirmed() bool {
+	return transaction.Status == "SUCCESSFULL" &&
+		transaction.ConfirmTransactionStatus != nil &&
+		*transaction.ConfirmTransactionStatus == "200"
+}
