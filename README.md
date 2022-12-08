@@ -9,7 +9,7 @@
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/NdoleStudio/orangemoney-go)](https://pkg.go.dev/github.com/NdoleStudio/orangemoney-go)
 
 
-This package provides a generic `go` client template for the Orange Money API
+This package provides a generic `go` client for the Orange Money API
 
 ## Installation
 
