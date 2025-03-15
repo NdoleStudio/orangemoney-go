@@ -15,7 +15,7 @@ type MerchantPaymentPayPrams struct {
 // MerchantPaymentTransaction represents a payment request sent to a subscriber
 type MerchantPaymentTransaction struct {
 	ID                        int     `json:"id"`
-	CreatedTime               string  `json:"createtime"`
+	CreatedTime               any     `json:"createtime"`
 	SubscriberMSISDN          string  `json:"subscriberMsisdn"`
 	Amount                    int     `json:"amount"`
 	PayToken                  string  `json:"payToken"`
