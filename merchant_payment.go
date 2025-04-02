@@ -45,5 +45,5 @@ func (transaction *MerchantPaymentTransaction) IsPending() bool {
 func (transaction *MerchantPaymentTransaction) IsConfirmed() bool {
 	return transaction.Status == "SUCCESSFULL" &&
 		transaction.ConfirmTransactionStatus != nil &&
-		*transaction.ConfirmTransactionStatus == "200"
+		transaction.ConfirmTransactionMessage != nil
 }
